@@ -7,6 +7,7 @@ Tasks represent atomic operations such as processes.
 """
 
 import os, re, sys, tempfile
+from functools import partial
 from waflib import Utils, Logs, Errors
 
 # task states
@@ -291,7 +292,13 @@ class TaskBase(evil):
 			pass
 
 		try:
-			ret = self.run()
+			if isinstance(self.run, partial):
+				# Python documentation says: "partial objects defined in classes
+				# behave like static methods and do not transform into bound
+				# methods during instance attribute look-up."
+				ret = self.run(self)
+			else:
+				ret = self.run()
 		except Exception:
 			self.err_msg = Utils.ex_stack()
 			self.hasrun = EXCEPTION
